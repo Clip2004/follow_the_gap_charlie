@@ -111,19 +111,27 @@ class GapFinderCharlie(Node):
     def timer_callback(self):
         twist_msg = Twist()
 
+        # Velocidad base según distancia
         if self.x > 2.0:
-            twist_msg.linear.x = 0.8
+            twist_msg.linear.x = 0.75
         elif self.x > 1.0:
-            twist_msg.linear.x = 0.5
+            twist_msg.linear.x = 0.6
         else:
-            twist_msg.linear.x = 0.2
+            twist_msg.linear.x = 0.5
 
         # Mapear velocidad lineal
         twist_msg.linear.x = self.map(twist_msg.linear.x, 0.0, 0.8, -0.5, 0.5)
 
+        # Penalizar velocidad si el ángulo es grande
+        # factor = 1.0 cuando angle = 0°, y se reduce hasta ~0.2 cuando angle → ±90°
+        # factor = max(0.2, 1 - abs(self.angle) / (np.pi / 2))
+        # twist_msg.linear.x *= factor
+
         # Ángulo relativo (ya calculado en [-pi/2, pi/2])
         twist_msg.angular.z = self.map(self.angle, -np.pi/2, np.pi/2, -0.5, 0.5)
+
         self.cmd_pos_ctrl_pub.publish(twist_msg)
+
 
     def map(self, x, in_min, in_max, out_min, out_max):
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
